@@ -15,18 +15,18 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:
 .app{display:flex;min-height:100vh}
 .sidebar{width:230px;background:var(--surface);border-right:.5px solid var(--border);padding:20px 12px;position:fixed;height:100vh;overflow-y:auto;z-index:10}
 .main{margin-left:230px;flex:1;padding:24px;max-width:1400px}
-@media(max-width:768px){
-  .sidebar{display:none;position:fixed;top:0;left:0;width:80%;max-width:300px;height:100vh;z-index:500;box-shadow:4px 0 24px rgba(0,0,0,.18)}
-  .sidebar.open{display:block}
-  .main{margin-left:0;padding:16px;padding-top:60px}
-  .mobile-topbar{display:flex}
-  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:400}
-  .sidebar-overlay.open{display:block}
-}
 .mobile-topbar{display:none;position:fixed;top:0;left:0;right:0;height:52px;background:var(--surface);border-bottom:.5px solid var(--border);z-index:50;align-items:center;padding:0 14px;gap:12px}
 .hamburger{background:none;border:none;cursor:pointer;padding:6px;color:var(--text);display:flex}
 .hamburger svg{width:22px;height:22px}
 .mobile-title{font-size:14px;font-weight:600;color:var(--text)}
+@media(max-width:768px){
+  .sidebar{display:none;position:fixed;top:0;left:0;width:80%;max-width:300px;height:100vh;z-index:500;box-shadow:4px 0 24px rgba(0,0,0,.18)}
+  .sidebar.open{display:block}
+  .main{margin-left:0;padding:16px;padding-top:60px}
+  .mobile-topbar{display:flex !important}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:400}
+  .sidebar-overlay.open{display:block}
+}
 .logo{font-size:15px;font-weight:600;padding:4px 8px 16px;border-bottom:.5px solid var(--border);margin-bottom:10px;color:var(--text)}
 .logo .sub{font-size:11px;font-weight:400;color:var(--t3);display:block;margin-top:2px}
 .year-edit{font-size:13px;font-weight:700;color:var(--accent);cursor:pointer;border-bottom:1px dashed var(--accent)}
