@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gastos del Hogar</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
 :root{--bg:#f7f6f3;--surface:#fff;--s2:#f0efe9;--border:rgba(0,0,0,.08);--bstrong:rgba(0,0,0,.15);--text:#1a1a18;--t2:#52514e;--t3:#888780;--accent:#2a78d6;--abg:#e6f1fb;--gbg:#eaf3de;--gt:#3b6d11;--rbg:#fcebeb;--rt:#a32d2d;--r:8px}
 @media(prefers-color-scheme:dark){:root{--bg:#141413;--surface:#1e1e1c;--s2:#252523;--border:rgba(255,255,255,.08);--bstrong:rgba(255,255,255,.15);--text:#f0efe9;--t2:#c3c2b7;--t3:#898781;--abg:#042c53;--gbg:#173404;--gt:#9fe1cb;--rbg:#501313;--rt:#f7c1c1}}
@@ -213,10 +215,8 @@ tr:hover:not(.tr):not(.sr) td{background:var(--s2)}
 </div>
 <div class="toast" id="toast"></div>
 
-<script type="module">
-// ── FIREBASE IMPORTS (deben ir primero en type=module) ─────────────────────────
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+<script>
+
 
 // ── CONSTANTS ──────────────────────────────────────────────────────────────────
 const MONTHS=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
@@ -971,35 +971,6 @@ function exportCSV(){
 }
 
 // ── FIREBASE ───────────────────────────────────────────────────────────────────
-
-
-// Debounce: guardar 1.5s después del último cambio para no saturar Firebase
-function saveState(){
-  clearTimeout(saveTimer);
-function saveState(){
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(async ()=>{
-    try{
-      const state={YEAR,years,cats,DB,selMonth,selSuperTab,_v:Date.now()};
-      await setDoc(DOC,{json:JSON.stringify(state)});
-    }catch(e){console.warn("Error guardando:",e);}
-  },1500);
-}
-}
-
-
-}
-
-// ── INDICADOR DE ESTADO ────────────────────────────────────────────────────────
-
-// Pantalla de carga inicial
-
-// ── INIT ───────────────────────────────────────────────────────────────────────
-
-// ── FIREBASE ───────────────────────────────────────────────────────────────────
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-
 const firebaseConfig = {
   apiKey: "AIzaSyC7PK3tsWd6nO10e97k7nU3aODKI6av1Qk",
   authDomain: "gastos-de-hogar.firebaseapp.com",
@@ -1008,91 +979,85 @@ const firebaseConfig = {
   messagingSenderId: "655039205287",
   appId: "1:655039205287:web:1c4112260222ccce19f082"
 };
-const fbApp = initializeApp(firebaseConfig);
-const db    = getFirestore(fbApp);
-const DOC   = doc(db, 'gastos', 'estado');
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const DOC = db.collection('gastos').doc('estado');
 let saveTimer = null;
 
 function saveState(){
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(async ()=>{
-    try{
-      const state={YEAR,years,cats,DB,selMonth,selSuperTab,_v:Date.now()};
-      await setDoc(DOC,{json:JSON.stringify(state)});
-    }catch(e){console.warn('Error guardando en Firebase:',e);}
-  },1500);
+  saveTimer = setTimeout(function(){
+    const state={YEAR:YEAR,years:years,cats:cats,DB:DB,selMonth:selMonth,selSuperTab:selSuperTab};
+    DOC.set({json:JSON.stringify(state)}).catch(function(e){console.warn('Error guardando:',e);});
+  },1200);
 }
 
-async function loadState(){
-  try{
-    const snap=await getDoc(DOC);
-    if(!snap.exists()||!snap.data().json)return false;
-    const s=JSON.parse(snap.data().json);
-    if(s.cats)cats=s.cats;
-    if(s.DB)Object.assign(DB,s.DB);
-    if(s.years)years=s.years;
-    if(typeof s.YEAR==='number')YEAR=s.YEAR;
-    if(typeof s.selMonth==='number')selMonth=s.selMonth;
-    if(s.selSuperTab!==undefined)selSuperTab=s.selSuperTab;
+function loadState(){
+  return DOC.get().then(function(snap){
+    if(!snap.exists || !snap.data().json) return false;
+    const s = JSON.parse(snap.data().json);
+    if(s.cats) cats = s.cats;
+    if(s.DB) Object.assign(DB, s.DB);
+    if(s.years) years = s.years;
+    if(typeof s.YEAR === 'number') YEAR = s.YEAR;
+    if(typeof s.selMonth === 'number') selMonth = s.selMonth;
+    if(s.selSuperTab !== undefined) selSuperTab = s.selSuperTab;
     return true;
-  }catch(e){console.warn('Error cargando de Firebase:',e);return false;}
+  }).catch(function(e){
+    console.warn('Error cargando:', e);
+    return false;
+  });
 }
 
 function clearState(){
   if(confirm('¿Borrar todos los datos de la nube y volver a los datos originales?')){
-    setDoc(DOC,{json:''}).then(()=>{initDB();location.reload();});
+    DOC.set({json:''}).then(function(){ initDB(); location.reload(); });
   }
 }
 
-function showBanner(msg,color){
-  const existing=document.getElementById('fb-banner');if(existing)existing.remove();
-  const b=document.createElement('div');b.id='fb-banner';
-  b.style.cssText=`position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:${color==='green'?'var(--gbg)':'var(--rbg)'};color:${color==='green'?'var(--gt)':'var(--rt)'};border:.5px solid ${color==='green'?'var(--gt)':'var(--rt)'};padding:9px 18px;border-radius:var(--r);font-size:12px;z-index:300;display:flex;align-items:center;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,.12)`;
-  b.innerHTML=msg+' <button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;font-size:15px;line-height:1;opacity:.7">✕</button>';
+function showBanner(msg, color){
+  const existing = document.getElementById('fb-banner');
+  if(existing) existing.remove();
+  const b = document.createElement('div');
+  b.id = 'fb-banner';
+  b.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:'+(color==='green'?'var(--gbg)':'var(--rbg)')+';color:'+(color==='green'?'var(--gt)':'var(--rt)')+';border:.5px solid '+(color==='green'?'var(--gt)':'var(--rt)')+';padding:9px 18px;border-radius:var(--r);font-size:12px;z-index:300;display:flex;align-items:center;gap:10px;box-shadow:0 2px 12px rgba(0,0,0,.12)';
+  b.innerHTML = msg + ' <button onclick="this.parentNode.remove()" style="background:none;border:none;cursor:pointer;font-size:15px;line-height:1;opacity:.7">\u2715</button>';
   document.body.appendChild(b);
-  setTimeout(()=>{if(b.parentNode)b.remove();},4500);
+  setTimeout(function(){ if(b.parentNode) b.remove(); }, 4500);
 }
 
 function showLoader(){
-  const l=document.createElement('div');l.id='loader';
-  l.style.cssText='position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
-  l.innerHTML=`<div style="font-size:32px">🏠</div><div style="font-size:15px;font-weight:600;color:var(--text)">Gastos del Hogar</div><div style="font-size:13px;color:var(--t3)">Cargando datos desde la nube…</div><div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite"></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>`;
-  document.body.appendChild(l);return l;
+  const l = document.createElement('div');
+  l.id = 'loader';
+  l.style.cssText = 'position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
+  l.innerHTML = '<div style="font-size:32px">\ud83c\udfe0</div><div style="font-size:15px;font-weight:600;color:var(--text)">Gastos del Hogar</div><div style="font-size:13px;color:var(--t3)">Cargando datos desde la nube\u2026</div><div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite"></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+  document.body.appendChild(l);
+  return l;
 }
 
-// ── EXPONER AL SCOPE GLOBAL ────────────────────────────────────────────────────
-window.showSec=showSec; window.switchYear=switchYear; window.addYear=addYear;
-window.editYear=editYear; window.renderDolar=renderDolar; window.editDolar=editDolar;
-window.openModal=openModal; window.closeModal=closeModal; window.saveModal=saveModal;
-window.onCC=onCC; window.onSubChange=onSubChange; window.pC=pC;
-window.exportCSV=exportCSV; window.clearState=clearState; window.showInner=showInner;
-window.renderMensual=renderMensual; window.renderSuper=renderSuper;
-window.renderSuperContent=renderSuperContent; window.renderFijos=renderFijos;
-window.renderResumen=renderResumen; window.renderYearPills=renderYearPills;
-
 // ── INIT ───────────────────────────────────────────────────────────────────────
-(async ()=>{
-  const loader=showLoader();
-  try{
-    const hadSaved=await loadState();
+(function(){
+  const loader = showLoader();
+  loadState().then(function(hadSaved){
     loader.remove();
     renderYearPills();
     renderDolar();
     renderResumen();
     if(hadSaved){
-      showBanner('☁️ Datos sincronizados correctamente','green');
-    }else{
-      showBanner('✨ Primera vez — los datos de ejemplo están listos','green');
+      showBanner('\u2601\ufe0f Datos sincronizados desde la nube', 'green');
+    } else {
+      showBanner('\u2728 Primera vez \u2014 datos de ejemplo cargados', 'green');
       saveState();
     }
-  }catch(e){
+  }).catch(function(){
     loader.remove();
     renderYearPills();
     renderDolar();
     renderResumen();
-    showBanner('⚠️ Sin conexión — trabajando sin sincronización','red');
-  }
+    showBanner('\u26a0\ufe0f Sin conexi\u00f3n con la nube \u2014 revis\u00e1 tu internet', 'red');
+  });
 })();
+
 </script>
 </body>
 </html>
