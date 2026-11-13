@@ -21,7 +21,7 @@
 body{font-family:-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
 .app{display:flex;min-height:100vh}
 .sidebar{width:230px;background:var(--surface);border-right:.5px solid var(--border);padding:20px 12px;position:fixed;height:100vh;overflow-y:auto;z-index:10}
-.main{margin-left:230px;flex:1;padding:24px;max-width:1400px}
+.main{margin-left:230px;flex:1;padding:24px;max-width:1400px;min-width:0;width:100%}
 .mobile-topbar{display:none;position:fixed;top:0;left:0;right:0;height:52px;background:var(--surface);border-bottom:.5px solid var(--border);z-index:50;align-items:center;padding:0 14px;gap:12px}
 .hamburger{background:none;border:none;cursor:pointer;padding:6px;color:var(--text);display:flex}
 .hamburger svg{width:22px;height:22px}
@@ -29,7 +29,22 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:
 @media(max-width:768px){
   .sidebar{display:none;position:fixed;top:0;left:0;width:80%;max-width:300px;height:100vh;z-index:500;box-shadow:4px 0 24px rgba(0,0,0,.18)}
   .sidebar.open{display:block}
-  .main{margin-left:0;padding:16px;padding-top:calc(60px + env(safe-area-inset-top, 0px))}
+  .main{margin-left:0;padding:12px;padding-top:calc(60px + env(safe-area-inset-top, 0px));width:100%;min-width:0;overflow-x:hidden;box-sizing:border-box}
+  .card{padding:12px 10px;overflow:hidden}
+  .mg{grid-template-columns:repeat(2,1fr)}
+  .g2{grid-template-columns:1fr}
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%}
+  table{min-width:480px}
+  /* Gráficos: forzar altura menor y ancho 100% del contenedor */
+  [style*="height:260px"]{height:200px !important}
+  [style*="height:240px"]{height:200px !important}
+  [style*="height:220px"]{height:180px !important}
+  .mv{font-size:17px}
+  /* Sidebar: asegurar scroll y no cortar */
+  .sidebar{overflow-y:auto;overflow-x:hidden;padding-top:calc(52px + env(safe-area-inset-top, 0px))}
+  .sidebar .logo{margin-top:0}
+  /* Números: no cortar con overflow */
+  .mc{overflow:hidden;word-break:break-word}
   .mobile-topbar{display:flex !important}
   .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:400}
   .sidebar-overlay.open{display:block}
