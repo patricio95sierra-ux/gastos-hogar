@@ -2,8 +2,15 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Gastos del Hogar</title>
+<!-- PWA / iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Gastos">
+<meta name="theme-color" content="#2a78d6">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -22,7 +29,7 @@ body{font-family:-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:
 @media(max-width:768px){
   .sidebar{display:none;position:fixed;top:0;left:0;width:80%;max-width:300px;height:100vh;z-index:500;box-shadow:4px 0 24px rgba(0,0,0,.18)}
   .sidebar.open{display:block}
-  .main{margin-left:0;padding:16px;padding-top:60px}
+  .main{margin-left:0;padding:16px;padding-top:calc(60px + env(safe-area-inset-top, 0px))}
   .mobile-topbar{display:flex !important}
   .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:400}
   .sidebar-overlay.open{display:block}
@@ -128,8 +135,25 @@ tr:hover:not(.tr):not(.sr) td{background:var(--s2)}
 .leg{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
 .li{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--t2)}
 .ls{width:10px;height:10px;border-radius:2px}
-.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:var(--r);font-size:13px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast{position:fixed;bottom:24px;bottom:calc(24px + env(safe-area-inset-bottom));right:24px;background:var(--text);color:var(--bg);padding:10px 16px;border-radius:var(--r);font-size:13px;z-index:300;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
+
+/* iPhone safe area + touch improvements */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .sidebar{padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+  .main{padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+  .mobile-topbar{padding-left:calc(14px + env(safe-area-inset-left));padding-right:calc(14px + env(safe-area-inset-right));padding-top:env(safe-area-inset-top);height:calc(52px + env(safe-area-inset-top))}
+}
+/* Touch tap targets */
+.nav{min-height:44px}
+.btn{min-height:40px}
+.pill{min-height:36px}
+.yr-pill{min-height:32px}
+/* iOS input zoom prevention */
+@media(max-width:768px){
+  .fr input,.fr select,input,select{font-size:16px !important}
+  .edit-in{font-size:16px !important}
+}
 .itabs{display:flex;border-bottom:.5px solid var(--border);margin-bottom:16px;overflow-x:auto}
 .itab{padding:8px 14px;font-size:12px;font-weight:500;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;color:var(--t2);margin-bottom:-.5px;font-family:inherit;white-space:nowrap;transition:color .15s}
 .itab.active{color:var(--accent);border-bottom-color:var(--accent)}
@@ -1062,6 +1086,15 @@ function showLoader(){
   l.innerHTML = '<div style="font-size:32px">\ud83c\udfe0</div><div style="font-size:15px;font-weight:600;color:var(--text)">Gastos del Hogar</div><div style="font-size:13px;color:var(--t3)">Cargando datos desde la nube\u2026</div><div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite"></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
   document.body.appendChild(l);
   return l;
+}
+
+// ── SERVICE WORKER ─────────────────────────────────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('/sw.js').catch(function(e){
+      console.warn('SW registro fallido:', e);
+    });
+  });
 }
 
 // ── INIT ───────────────────────────────────────────────────────────────────────
